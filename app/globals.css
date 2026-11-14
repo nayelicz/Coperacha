@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html { background: #FAF9F6; }
+body { @apply bg-crema text-tinta antialiased; font-size: 17px; }
+
+@layer components {
+  .tarjeta { @apply bg-white rounded-2xl shadow-[0_2px_18px_-6px_rgba(60,40,20,0.12)] border border-[#F0EBE3]; }
+  .boton { @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 text-lg font-bold transition active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed; }
+  .boton-barrio { @apply boton bg-barrio text-white hover:bg-barrio-oscuro shadow-md shadow-orange-200; }
+  .boton-impulso { @apply boton bg-impulso text-white hover:bg-impulso-oscuro shadow-md shadow-emerald-200; }
+  .boton-suave { @apply boton bg-white text-tinta border-2 border-[#EDE6DC] hover:border-barrio; }
+  .campo { @apply w-full rounded-xl border-2 border-[#EDE6DC] bg-white px-4 py-3.5 text-lg outline-none transition focus:border-barrio placeholder:text-[#B5ADA2]; }
+  .etiqueta { @apply block text-base font-bold mb-1.5; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold; }
+}
+
+@media print {
+  .no-imprimir { display: none !important; }
+  body { background: white; }
+}
