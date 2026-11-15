@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Clock, Lock, MapPin, PartyPopper, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Clock, MapPin, PartyPopper } from "lucide-react";
 import Progreso from "./Progreso";
 import Insignia, { puntoDe } from "./Insignia";
 import Entrarle from "./Entrarle";
@@ -40,7 +40,7 @@ export default function DetalleEnVivo({ id }: { id: string }) {
         <BotonCompartir />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr] lg:items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_1fr] lg:items-start">
         {/* Encabezado oscuro + tramos */}
         <section className="animate-subir space-y-5 pt-2">
           <div>
@@ -61,23 +61,11 @@ export default function DetalleEnVivo({ id }: { id: string }) {
 
           <Progreso juntado={c.calculo.juntadoBarrio} metaBarrio={c.calculo.metaBarrio} sedeco={c.sedeco.monto} sedecoDesbloqueado={c.sedeco.desbloqueado} grande />
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="panel p-4">
-              <p className="text-[13px] font-semibold text-barrio">Tramo 1 · Barrio 80%</p>
-              <p className="mt-1 text-[15px] text-humo">
-                {c.calculo.faltaBarrio > 0 ? <>Faltan <b className="cifras text-white">{pesos(c.calculo.faltaBarrio)}</b></> : <b className="text-impulso">¡Meta juntada!</b>}
-                {c.estado === "juntando" && <> · {diasRestantes(c.juntarHasta)} días</>}
-              </p>
-            </div>
-            <div className={`rounded-[28px] p-4 transition ${c.sedeco.desbloqueado ? "bg-impulso text-carbon" : "panel"}`}>
-              <p className={`flex items-center gap-1 text-[13px] font-semibold ${c.sedeco.desbloqueado ? "" : "text-humo"}`}>
-                {c.sedeco.desbloqueado ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Tramo 2 · SEDECO 20%
-              </p>
-              <p className={`mt-1 text-[15px] ${c.sedeco.desbloqueado ? "" : "text-humo"}`}>
-                {c.sedeco.desbloqueado ? <>Encendido con <b className="cifras">{pesos(c.sedeco.monto)}</b> (simulado)</> : "Se enciende al llegar al 80%, sin intereses."}
-              </p>
-            </div>
-          </div>
+          <p className="text-[15px] text-humo">
+            {c.sedeco.desbloqueado
+              ? <>¡Meta del barrio juntada! Se encendió el <b className="text-impulso">Impulso SEDECO</b> de {pesos(c.sedeco.monto)} (simulado), sin intereses.</>
+              : <>Faltan <b className="cifras text-white">{pesos(c.calculo.faltaBarrio)}</b>{c.estado === "juntando" && <> · {diasRestantes(c.juntarHasta)} días</>}. Al 80% se enciende el <b className="text-impulso">Impulso SEDECO</b>.</>}
+          </p>
 
           {yaRegresa && (
             <Link href={`/coperacha/${c.id}/pagar`} className="boton-impulso w-full">
@@ -117,7 +105,7 @@ export default function DetalleEnVivo({ id }: { id: string }) {
                   <div className="flex flex-col items-end gap-1">
                     <span className="cifras font-semibold">+{pesos(a.monto)}</span>
                     <Insignia estado={a.estado} simulado={a.simulado} modoDemo={a.modoDemo} corta />
-                    {a.estado === "pendiente" && <BotonSimular aportacionId={a.id} alTerminar={cargar} texto="Simular" />}
+                    {a.estado === "pendiente" && datos.modoDemo && <BotonSimular aportacionId={a.id} alTerminar={cargar} texto="Simular" />}
                   </div>
                 </li>
               ))}

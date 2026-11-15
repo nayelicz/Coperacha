@@ -4,7 +4,7 @@ export const CLABES_EVENTO = [
   { nombre: "Santiago Tena", clabe: "012180015913466252" },
   { nombre: "Adrian Soto", clabe: "014180606004536217" },
   { nombre: "Miriam Nava", clabe: "012180015355682429" },
-  { nombre: "David Perez", clabe: "127180016558868385" },
+  { nombre: "David Perez", clabe: "127180016558860385" },
 ] as const;
 
 const PESOS = [3, 7, 1];

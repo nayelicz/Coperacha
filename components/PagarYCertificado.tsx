@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  AlertTriangle, ArrowLeft, Award, Banknote, Check, Download, FlaskConical, Hourglass, Landmark, Loader2, Receipt, RotateCcw,
+  AlertTriangle, ArrowLeft, Award, Banknote, Check, Download, FlaskConical, Hourglass, Landmark, Loader2, RotateCcw,
   ShieldCheck, ShoppingBag, Smartphone, Sparkles, Ticket,
 } from "lucide-react";
-import Pasos from "./Pasos";
 import BotonSimular from "./BotonSimular";
 import BotonCompartir from "./BotonCompartir";
 import { Aviso, Avatar, Cargando, Hoja, MontoGrande } from "./ui";
@@ -97,15 +96,6 @@ export default function PagarYCertificado({ id }: { id: string }) {
             <Resumen icono={Sparkles} titulo="Tarifa Coperacha 1%" valor={pesos(c.tarifa.monto)} nota={textoTarifa(c.tarifa.estado)} fondo="bg-capa2 text-white" />
           </div>
 
-          <Pasos
-            color="impulso"
-            pasos={[
-              { icono: Receipt, texto: "Revisa lo que le toca a cada quien" },
-              { icono: Smartphone, texto: "Autoriza cada CoDi en tu banco" },
-              { icono: Award, texto: "Recibe tu certificado y pide más" },
-            ]}
-          />
-
           <Hoja>
             <h2 className="text-xl font-bold">Lo que le toca a cada quien</h2>
             <ul className="mt-1 divide-y divide-carbon/[0.06]">
@@ -131,7 +121,7 @@ export default function PagarYCertificado({ id }: { id: string }) {
                     <div className="flex flex-col items-end gap-1">
                       <span className="cifras font-semibold">{pesos(r.monto, true)}</span>
                       {c.regresos.length > 0 && <span className={`chip py-0.5 text-xs ${est.clase}`}><est.icono className="h-3.5 w-3.5" /> {est.texto}</span>}
-                      {c.regresos.length > 0 && ["por_pedir", "solicitado", "requiere_cuenta", "error"].includes(r.estado) && (
+                      {c.regresos.length > 0 && datos.modoDemo && ["por_pedir", "solicitado", "requiere_cuenta", "error"].includes(r.estado) && (
                         <BotonSimular regresoId={r.id} alTerminar={cargar} texto="Simular que el negocio pagó" />
                       )}
                     </div>

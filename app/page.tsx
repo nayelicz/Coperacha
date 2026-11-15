@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Coins, HandHeart, Plus, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
+import { ArrowRight, HandHeart, Plus, ShieldCheck, Sparkles } from "lucide-react";
 import { soloLeer } from "@/lib/db";
 import { vistaPublica } from "@/lib/logica";
 import { horaCorta, pesos } from "@/lib/formato";
 import { r2 } from "@/lib/logica";
 import TarjetaCoperacha from "@/components/TarjetaCoperacha";
 import Insignia, { puntoDe } from "@/components/Insignia";
-import Pasos from "@/components/Pasos";
 import { Avatar, Hoja, MontoGrande, PilaAvatares } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +26,7 @@ export default async function Inicio() {
   const confirmados = movimientos.filter((m) => m.estado === "confirmada");
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1.05fr] lg:items-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.05fr] lg:items-start">
       {/* Columna oscura: "saldo" del barrio */}
       <div className="space-y-6">
         <section className="animate-subir pt-4">
@@ -76,14 +75,6 @@ export default async function Inicio() {
           </section>
         )}
 
-        <Pasos
-          titulo="Así funciona"
-          pasos={[
-            { icono: HandHeart, texto: "Elige cuánto poner" },
-            { icono: Smartphone, texto: "Autoriza en tu banco con CoDi" },
-            { icono: Coins, texto: "Recibe +4% o +8% al final" },
-          ]}
-        />
       </div>
 
       {/* Hoja clara: movimientos en vivo */}

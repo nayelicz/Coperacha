@@ -41,7 +41,7 @@ function baseInicial(): BaseDeDatos {
   try {
     const mapa = JSON.parse(process.env.PEY_BANK_ACCOUNTS || "{}") as Record<string, string>;
     for (const [clabe, id] of Object.entries(mapa)) {
-      cuentas[clabe] = { clabe, bankAccountId: id, codiStatus: "ACTIVE", alias: clabe, actualizadaEn: new Date().toISOString() };
+      cuentas[clabe] = { clabe, bankAccountId: id, codiStatus: "PENDING", alias: clabe, actualizadaEn: new Date().toISOString() }; // se confirma con pey al usarla
     }
   } catch {
     cuentas = {};

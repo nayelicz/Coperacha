@@ -102,6 +102,14 @@ export function consultarTransaccion(id: string) {
   );
 }
 
+/** Transacciones pagadas de un QR de CoDi (un QR no es una transacción; sus pagos sí). */
+export function transaccionesDeQr(qrId: string) {
+  return llamar<{ items: { id: string; status: string; amount?: number }[]; nextToken: string | null }>(
+    "GET",
+    `/transaction/codi/qr/${encodeURIComponent(qrId)}`,
+  );
+}
+
 // ---------- Firma del webhook (Standard Webhooks) ----------
 // pey firma cada entrega con Standard Webhooks (https://www.standardwebhooks.com):
 //   headers: webhook-id, webhook-timestamp, webhook-signature ("v1,<base64>" separados por espacio)
