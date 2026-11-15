@@ -21,7 +21,6 @@ Coperacha **nunca retiene dinero en una cuenta propia**. Todo pasa directo entre
 | Se junta el 80% | Se enciende el Impulso SEDECO (20%) y se cobra la **tarifa Coperacha de 1%** con una solicitud CoDi aparte al celular del negocio. | `POST /codi/pn` (a la cuenta de la plataforma) |
 | Toca regresar | Por cada persona, al celular del negocio le llega una solicitud CoDi **con el `bankAccountId` de la CLABE de esa persona**. El negocio autoriza y el dinero va directo de su cuenta a la de cada quien. | `POST /codi/pn` con `bankAccountId` de quien recibe |
 | Todo regresado | Se emite el **Certificado de Buen Pagador Verificado con CoDi**, que sube el límite de la próxima coperacha ($5,000 → $10,000 → $20,000). | — |
-
 Para que el dinero llegue directo, cada CLABE debe estar **registrada en pey y en estado `ACTIVE`** (`POST /bank-account`). El registro con Banxico tarda hasta 5 días hábiles; para el hackatón usamos las CLABEs pre-autorizadas del evento. Si una CLABE todavía no está `ACTIVE`, **el regreso no se manda** (nunca se desvía a la cuenta de la plataforma) y queda como “Falta registrar la CLABE”.
 
 ### Ganancias y tarifa (ejemplo con $5,000)
@@ -147,5 +146,11 @@ En Vercel el sistema de archivos es efímero, así que `lib/db.ts` usa **Redis d
 ## Aviso
 
 Captar dinero del público prometiendo un rendimiento puede requerir autorización bajo la Ley Fintech (instituciones de financiamiento colectivo, CNBV). Este es un prototipo de hackatón; antes de operar con usuarios reales hay que revisar el marco regulatorio.
+
+## Integrantes del equipo:
+Jorge Saldaña Jiménez  jorch782@gmail.com  https://github.com/Jorch7ss
+Miriam Mejía Rojas  miriam22.meji@gmail.com https://github.com/Axolo-Tech
+Gerardo Pedrizco Vela gerardo.gerry.pedrizco@gmail.com https://github.com/MarxMad
+Nayeli Chávez Zamorate  nayelic@gmail.com https://github.com/nayelicz
 
 CoDi® es una marca de Banco de México. pey® es marca de su titular.
