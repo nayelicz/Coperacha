@@ -1,7 +1,27 @@
-import { conBase, nuevoId } from "./db";
-import { crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
-import { calcularRegresos, esBono, r2, revisarCertificado } from "./logica";
-import type { Regreso } from "./types";
+import { conBase, nuevoId, soloLeer } from "./db";
+import { consultarCuenta, consultarTransaccion, transaccionesDeQr, crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
+import { aplicarPago, calcularRegresos, esBono, r2, revisarCertificado } from "./logica";
+import type { CuentaPey, Regreso } from "./types";
+
+/**
+ * bankAccountId de una CLABE solo si está ACTIVE. Si la base dice que no, le pregunta a pey
+ * (GET /bank-account/:id) y guarda el estado nuevo: así no dependemos de que llegue bank.account.updated.
+ */
+export async function cuentaActiva(cuenta: CuentaPey | undefined): Promise<string | undefined> {
+  if (!cuenta) return undefined;
+  if (cuenta.codiStatus === "ACTIVE") return cuenta.bankAccountId;
+  if (!peyConfigurado()) return undefined;
+  try {
+    const r = await consultarCuenta(cuenta.bankAccountId);
+    await conBase((db) => {
+      const c = db.cuentas[cuenta.clabe];
+      if (c) Object.assign(c, { codiStatus: r.codiStatus, errorMessage: r.errorMessage, actualizadaEn: new Date().toISOString() });
+    });
+    return r.codiStatus === "ACTIVE" ? cuenta.bankAccountId : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Cobro independiente de la tarifa Coperacha (1%), solo cuando la meta se completa.
@@ -79,8 +99,7 @@ export async function iniciarRegresos(coperachaId: string) {
 
   const actualizaciones: Partial<Regreso>[] = [];
   for (const r of plan.pendientes) {
-    const bankAccountId =
-      r.tipo === "sedeco" ? plan.sedecoId : r.clabe && plan.cuentas[r.clabe]?.codiStatus === "ACTIVE" ? plan.cuentas[r.clabe].bankAccountId : "";
+    const bankAccountId = r.tipo === "sedeco" ? plan.sedecoId : r.clabe ? (await cuentaActiva(plan.cuentas[r.clabe])) || "" : "";
 
     if (!peyConfigurado() || !plan.celular) {
       actualizaciones.push({
@@ -129,4 +148,63 @@ export async function iniciarRegresos(coperachaId: string) {
       total: r2(c.regresos.reduce((s, r) => s + r.monto, 0)),
     };
   });
+}
+
+/**
+ * Respaldo del webhook: pregunta a pey (GET /transaction/:id) si las solicitudes CoDi pendientes
+ * de una coperacha ya se pagaron. Si sí, aplica el pago con la MISMA lógica del webhook y el mismo
+ * transactionId, así que si después llega el webhook se detecta como duplicado.
+ * Celular (pn): GET /transaction/:id. QR: GET /transaction/codi/qr/:id.
+ */
+export async function verificarConPey(coperachaId: string) {
+  if (!peyConfigurado()) return { revisadas: 0, pagadas: 0 };
+  const db = await soloLeer();
+  const c = db.coperachas.find((x) => x.id === coperachaId);
+  if (!c) return { revisadas: 0, pagadas: 0 };
+
+  const ahora = Date.now();
+  const porRevisar: { tx: string; aportacionId?: string; regresoId?: string }[] = [
+    ...c.aportaciones
+      .filter((a) => a.estado === "pendiente" && a.peyTransactionId && new Date(a.creadaEn).getTime() > ahora - 30 * 60_000)
+      .map((a) => ({ tx: a.peyTransactionId!, aportacionId: a.id })),
+    ...c.regresos.filter((r) => r.estado === "solicitado" && r.peyTransactionId).map((r) => ({ tx: r.peyTransactionId!, regresoId: r.id })),
+    ...(c.tarifa.estado === "solicitada" && c.tarifa.peyTransactionId ? [{ tx: c.tarifa.peyTransactionId }] : []),
+  ].slice(0, 10);
+
+  let pagadas = 0;
+  let completo = false;
+
+  // QR: se consulta la lista de pagos del QR (GET /transaction/codi/qr/:id)
+  const qrs = c.aportaciones.filter((a) => a.estado === "pendiente" && a.codiQrId && new Date(a.creadaEn).getTime() > ahora - 30 * 60_000).slice(0, 5);
+  for (const a of qrs) {
+    try {
+      const r = await transaccionesDeQr(a.codiQrId!);
+      const pago = r.items.find((t) => t.status === "PAID");
+      if (!pago) continue;
+      const res = await conBase((db2) => aplicarPago(db2, { transactionId: pago.id, amount: Number(pago.amount), aportacionId: a.id, codiQrId: a.codiQrId, simulado: false }));
+      if (res.tipo === "aplicado") {
+        pagadas++;
+        if (res.completo) completo = true;
+      }
+    } catch {
+      // siguiente vuelta
+    }
+  }
+  for (const p of porRevisar) {
+    try {
+      const t = await consultarTransaccion(p.tx);
+      if (t.status !== "PAID") continue;
+      const r = await conBase((db2) =>
+        aplicarPago(db2, { transactionId: p.tx, amount: Number(t.amount), aportacionId: p.aportacionId, regresoId: p.regresoId, simulado: false }),
+      );
+      if (r.tipo === "aplicado") {
+        pagadas++;
+        if (r.completo && p.aportacionId) completo = true;
+      }
+    } catch {
+      // pey no respondió: lo intentamos en la próxima vuelta
+    }
+  }
+  if (completo) await cobrarTarifa(coperachaId).catch(() => undefined);
+  return { revisadas: porRevisar.length, pagadas };
 }

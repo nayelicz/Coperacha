@@ -13,6 +13,8 @@ type PayloadPey = {
   codiQrId?: string;
   bankAccountId?: string;
   codiStatus?: string;
+  clabe?: string;
+  name?: string;
   id?: string;
   metadata?: { externalMetadata?: Record<string, string>; [k: string]: unknown };
 };
@@ -22,7 +24,7 @@ type PayloadPey = {
  * Recibe los eventos de pey:
  *  - codi.qr.payment_received  (pagaron un QR)
  *  - codi.pn.payment_received  (autorizaron una solicitud al celular)
- *  - actualización de cuenta bancaria (la CLABE pasó a ACTIVE)
+ *  - bank.account.updated     (la CLABE pasó a ACTIVE)
  * Reglas:
  *  - Firma Standard Webhooks (si PEY_WEBHOOK_SECRET está configurado).
  *  - Idempotencia por webhook-id y por transactionId: reintentos de pey no duplican pagos.
@@ -50,11 +52,17 @@ export async function POST(req: Request) {
   if (p.codiStatus && (p.bankAccountId || p.id) && !p.transactionId) {
     const id = p.bankAccountId || p.id!;
     await conBase((db) => {
+      let encontrada = false;
       for (const cuenta of Object.values(db.cuentas)) {
         if (cuenta.bankAccountId === id) {
           cuenta.codiStatus = p.codiStatus!;
           cuenta.actualizadaEn = new Date().toISOString();
+          encontrada = true;
         }
+      }
+      // bank.account.updated trae la CLABE: si la registraron desde el portal de pey, también la guardamos.
+      if (!encontrada && p.clabe && /^\d{18}$/.test(p.clabe)) {
+        db.cuentas[p.clabe] = { clabe: p.clabe, bankAccountId: id, codiStatus: p.codiStatus!, alias: p.name || p.clabe, actualizadaEn: new Date().toISOString() };
       }
     });
     return NextResponse.json({ ok: true, evento: "cuenta_actualizada" });

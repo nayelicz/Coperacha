@@ -96,7 +96,18 @@ export function consultarCuenta(id: string) {
 }
 
 export function consultarTransaccion(id: string) {
-  return llamar<{ id?: string; status: "PENDING" | "PAID" | string }>("GET", `/transaction/${encodeURIComponent(id)}`);
+  return llamar<{ id?: string; status: "PENDING" | "PAID" | string; amount?: number; datePaid?: number }>(
+    "GET",
+    `/transaction/${encodeURIComponent(id)}`,
+  );
+}
+
+/** Transacciones pagadas de un QR de CoDi (un QR no es una transacción; sus pagos sí). */
+export function transaccionesDeQr(qrId: string) {
+  return llamar<{ items: { id: string; status: string; amount?: number }[]; nextToken: string | null }>(
+    "GET",
+    `/transaction/codi/qr/${encodeURIComponent(qrId)}`,
+  );
 }
 
 // ---------- Firma del webhook (Standard Webhooks) ----------

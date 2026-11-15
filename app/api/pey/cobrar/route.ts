@@ -3,6 +3,7 @@ import { conBase, nuevoId, soloLeer } from "@/lib/db";
 import { clabeValida } from "@/lib/clabes";
 import { crearPushNotification, crearQr, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "@/lib/pey";
 import { faltaBarrio, motivoBloqueo } from "@/lib/logica";
+import { cuentaActiva } from "@/lib/acciones";
 import type { Aportacion, TipoGanancia } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
   const modoDemo = db.config.modoDemo;
   const montoCobrado = montoParaPey(monto, modoDemo);
   const cuentaNegocio = db.cuentas[c.clabeDestino];
-  const bankAccountId = cuentaNegocio?.codiStatus === "ACTIVE" ? cuentaNegocio.bankAccountId : undefined;
+  const bankAccountId = await cuentaActiva(cuentaNegocio);
   const ahora = new Date();
   const ap: Aportacion = {
     id: nuevoId("ap_"),

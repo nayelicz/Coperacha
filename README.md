@@ -51,6 +51,7 @@ Para que el dinero llegue directo, cada CLABE debe estar **registrada en pey y e
 
 | Ruta | Qué es |
 |---|---|
+| `/armar` | Formulario de 3 pasos **“Armar mi coperacha”**. |
 | `/` | Inicio: historia destacada **“Trini — Compra de insumos (CDMX)”** por $5,000 ($4,000 barrio + $1,000 SEDECO, CLABE de Miriam Nava), negocios del barrio y formulario de 3 pasos **“Armar mi coperacha”**. |
 | `/coperacha/[id]` | Pantalla compartida en vivo: barra de dos tramos (naranja barrio / verde SEDECO que se enciende y celebra al 80%), lista en tiempo real (polling cada 3 s) y tarjeta **“Entrarle a esta coperacha”**. |
 | `/coperacha/[id]/pagar` | Lo que le toca a cada quien, botón **“Regresar dinero con CoDi”** y **Certificado de Buen Pagador** (descargar como PDF / compartir). |
@@ -66,7 +67,9 @@ Para que el dinero llegue directo, cada CLABE debe estar **registrada en pey y e
 | `POST /api/pey/regresar` | `{ coperachaId }`: calcula y manda las solicitudes de regreso. |
 | `GET/POST /api/pey/cuentas` | Registrar CLABE (`POST /bank-account`), guardar un `bankAccountId` existente o refrescar su estado. |
 | `GET/POST /api/coperachas`, `GET/PATCH /api/coperachas/[id]` | Listar, crear y consultar coperachas. |
-| `GET/POST /api/config` | Leer o cambiar el Modo Demo. |
+| `GET/POST /api/config` | Leer o cambiar el Modo Demo; estado de la conexión con pey. |
+| `POST /api/pey/verificar` | `{ coperachaId }`: respaldo del webhook, consulta `GET /transaction/:id` en pey. |
+| `POST /api/demo/reiniciar` | Regresa la base a la historia de Trini (solo con Modo Demo). |
 
 ---
 
@@ -131,7 +134,15 @@ node scripts/probar-webhook.mjs <aportacionId> tx_001
 
 Next.js 14 (App Router) · TypeScript · Tailwind CSS · Lucide Icons · `qrcode` · persistencia en archivo JSON.
 
-> El archivo JSON es perfecto para correr local y en la demo. En Vercel (sistema de archivos efímero) los datos no persisten: para producción, cambia `lib/db.ts` por una base de datos (Postgres, SQLite en un volumen, etc.).
+### Desplegar en Vercel
+
+En Vercel el sistema de archivos es efímero, así que `lib/db.ts` usa **Redis de Upstash** (Vercel Marketplace) cuando existen `KV_REST_API_URL` y `KV_REST_API_TOKEN`, con un candado distribuido para que dos webhooks simultáneos no se pisen. En local sigue usando `data/coperachas.json`.
+
+1. Conecta Upstash Redis al proyecto (Vercel → Storage) y agrega `PEY_API_KEY`, `PEY_WEBHOOK_SECRET` y `NEXT_PUBLIC_APP_URL`.
+2. Registra en el portal de pey la URL `https://TU-APP.vercel.app/api/pey/webhook` (aparece lista para copiar en `/cuentas`).
+3. En `/cuentas` → **Conexión con pey** verás qué falta (API key, firma, webhook recibido, CLABE ACTIVE, base persistente) y un botón para **Reiniciar demo**.
+
+**Respaldo del webhook:** mientras hay solicitudes CoDi al celular pendientes, la pantalla llama a `POST /api/pey/verificar`, que consulta `GET /transaction/:id` en pey y aplica los pagos `PAID` con la misma lógica (y el mismo `transactionId`) que el webhook. Si el webhook llega después, se detecta como duplicado.
 
 ## Aviso
 
