@@ -1,5 +1,5 @@
 import { conBase, nuevoId, soloLeer } from "./db";
-import { consultarCuenta, consultarTransaccion, transaccionesDeQr, crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
+import { consultarCuenta, consultarTransaccion, transaccionesDeApiKey, transaccionesDeCuenta, crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
 import { aplicarPago, calcularRegresos, esBono, r2, revisarCertificado } from "./logica";
 import type { CuentaPey, Regreso } from "./types";
 
@@ -174,22 +174,27 @@ export async function verificarConPey(coperachaId: string) {
   let pagadas = 0;
   let completo = false;
 
-  // QR: se consulta la lista de pagos del QR (GET /transaction/codi/qr/:id)
-  const qrs = c.aportaciones.filter((a) => a.estado === "pendiente" && a.codiQrId && new Date(a.creadaEn).getTime() > ahora - 30 * 60_000).slice(0, 5);
-  for (const a of qrs) {
-    try {
-      const r = await transaccionesDeQr(a.codiQrId!);
-      const pago = r.items.find((t) => t.status === "PAID");
+  // QR: pey reporta el pago en la lista de la CLABE destino (o de la API key si no hubo bankAccountId).
+  // Se liga por payableId (= id del QR) o por metadata.externalMetadata.aportacionId.
+  const qrs = c.aportaciones.filter(
+    (a) => (a.estado === "pendiente" || a.estado === "expirada") && a.codiQrId && new Date(a.creadaEn).getTime() > ahora - 24 * 3600_000,
+  );
+  if (qrs.length) {
+    const listas: Awaited<ReturnType<typeof transaccionesDeApiKey>>["items"] = [];
+    const cuenta = db.cuentas[c.clabeDestino];
+    if (cuenta?.bankAccountId) listas.push(...(await transaccionesDeCuenta(cuenta.bankAccountId).then((r) => r.items).catch(() => [])));
+    listas.push(...(await transaccionesDeApiKey().then((r) => r.items).catch(() => [])));
+    for (const a of qrs) {
+      const pago = listas.find((t) => t.status === "PAID" && (t.payableId === a.codiQrId || t.metadata?.externalMetadata?.aportacionId === a.id));
       if (!pago) continue;
       const res = await conBase((db2) => aplicarPago(db2, { transactionId: pago.id, amount: Number(pago.amount), aportacionId: a.id, codiQrId: a.codiQrId, simulado: false }));
       if (res.tipo === "aplicado") {
         pagadas++;
         if (res.completo) completo = true;
       }
-    } catch {
-      // siguiente vuelta
     }
   }
+
   for (const p of porRevisar) {
     try {
       const t = await consultarTransaccion(p.tx);
