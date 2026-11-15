@@ -110,6 +110,19 @@ export function transaccionesDeQr(qrId: string) {
   );
 }
 
+type TxLista = {
+  items: { id: string; status: string; amount?: number; payableId?: string; metadata?: { externalMetadata?: Record<string, string> } }[];
+  nextToken: string | null;
+};
+/** Pagos recibidos en una CLABE registrada (aquí aparecen los QR/PN con bankAccountId). */
+export function transaccionesDeCuenta(bankAccountId: string) {
+  return llamar<TxLista>("GET", `/transaction/bank-account/${encodeURIComponent(bankAccountId)}`);
+}
+/** Pagos recibidos en la cuenta ligada a la API key (cobros sin bankAccountId). */
+export function transaccionesDeApiKey() {
+  return llamar<TxLista>("GET", "/transaction/api-key");
+}
+
 // ---------- Firma del webhook (Standard Webhooks) ----------
 // pey firma cada entrega con Standard Webhooks (https://www.standardwebhooks.com):
 //   headers: webhook-id, webhook-timestamp, webhook-signature ("v1,<base64>" separados por espacio)
