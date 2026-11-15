@@ -4,7 +4,8 @@ import crypto from "crypto";
 import { Redis } from "@upstash/redis";
 import type { BaseDeDatos, Coperacha } from "./types";
 
-const ARCHIVO = path.join(process.cwd(), "data", "coperachas.json");
+// En Vercel sin Redis solo /tmp es escribible (por instancia, no persiste): sirve para que no truene, no para la demo.
+const ARCHIVO = process.env.VERCEL ? "/tmp/coperachas.json" : path.join(process.cwd(), "data", "coperachas.json");
 const DIA = 24 * 60 * 60 * 1000;
 
 export function nuevoId(prefijo = ""): string {
