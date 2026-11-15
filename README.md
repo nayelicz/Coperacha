@@ -51,7 +51,7 @@ Para que el dinero llegue directo, cada CLABE debe estar **registrada en pey y e
 
 | Ruta | Qué es |
 |---|---|
-| `/` | Inicio: historia destacada **“Negocio Local de Miriam — Compra de insumos (CDMX)”** por $5,000 ($4,000 barrio + $1,000 SEDECO, CLABE de Miriam Nava), negocios del barrio y formulario de 3 pasos **“Armar mi coperacha”**. |
+| `/` | Inicio: historia destacada **“Trini — Compra de insumos (CDMX)”** por $5,000 ($4,000 barrio + $1,000 SEDECO, CLABE de Miriam Nava), negocios del barrio y formulario de 3 pasos **“Armar mi coperacha”**. |
 | `/coperacha/[id]` | Pantalla compartida en vivo: barra de dos tramos (naranja barrio / verde SEDECO que se enciende y celebra al 80%), lista en tiempo real (polling cada 3 s) y tarjeta **“Entrarle a esta coperacha”**. |
 | `/coperacha/[id]/pagar` | Lo que le toca a cada quien, botón **“Regresar dinero con CoDi”** y **Certificado de Buen Pagador** (descargar como PDF / compartir). |
 | `/cuentas` | Registrar CLABEs en pey y ver si ya están `ACTIVE`. |
@@ -82,7 +82,7 @@ npm run dev                  # http://localhost:3000
 
 Sin `PEY_API_KEY` la app funciona completa en **modo simulación**: los cobros se registran y puedes confirmarlos con el botón de simular.
 
-Los datos viven en `data/coperachas.json` (se crea solo, con la historia de Miriam). Para empezar de cero: `npm run reset-data`.
+Los datos viven en `data/coperachas.json` (se crea solo, con la historia de Trini). Para empezar de cero: `npm run reset-data`.
 
 ### Variables de entorno (`.env.local`)
 
@@ -107,14 +107,14 @@ Los datos viven en `data/coperachas.json` (se crea solo, con la historia de Miri
 
 ## Probar los webhooks
 
-**Con un pago real de $0.01:** abre `/coperacha/miriam-insumos`, entra con tu celular, autoriza la solicitud CoDi en tu banco y mira cómo aparece solita en la lista.
+**Con un pago real de $0.01:** abre `/coperacha/trini-insumos`, entra con tu celular, autoriza la solicitud CoDi en tu banco y mira cómo aparece solita en la lista.
 
 **Sin banco (webhook firmado de prueba):**
 
 ```bash
 # 1) Crea una aportación (o hazlo desde la pantalla)
 curl -s -X POST http://localhost:3000/api/pey/cobrar -H 'Content-Type: application/json' \
-  -d '{"coperachaId":"miriam-insumos","nombre":"Ana","celular":"5512345678","clabeRetorno":"012180015826225713","monto":200,"ganancia":"efectivo4","metodo":"pn"}'
+  -d '{"coperachaId":"trini-insumos","nombre":"Ana","celular":"5512345678","clabeRetorno":"012180015826225713","monto":200,"ganancia":"efectivo4","metodo":"pn"}'
 
 # 2) Manda un webhook firmado igual que pey (usa PEY_WEBHOOK_SECRET de .env.local)
 node scripts/probar-webhook.mjs <aportacionId> tx_001
