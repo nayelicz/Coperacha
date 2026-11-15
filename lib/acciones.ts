@@ -1,6 +1,6 @@
-import { conBase, nuevoId } from "./db";
-import { crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
-import { calcularRegresos, esBono, r2, revisarCertificado } from "./logica";
+import { conBase, nuevoId, soloLeer } from "./db";
+import { consultarTransaccion, crearPushNotification, montoParaPey, nuevoNumRef, peyConfigurado, PeyError } from "./pey";
+import { aplicarPago, calcularRegresos, esBono, r2, revisarCertificado } from "./logica";
 import type { Regreso } from "./types";
 
 /**
@@ -129,4 +129,46 @@ export async function iniciarRegresos(coperachaId: string) {
       total: r2(c.regresos.reduce((s, r) => s + r.monto, 0)),
     };
   });
+}
+
+/**
+ * Respaldo del webhook: pregunta a pey (GET /transaction/:id) si las solicitudes CoDi pendientes
+ * de una coperacha ya se pagaron. Si sí, aplica el pago con la MISMA lógica del webhook y el mismo
+ * transactionId, así que si después llega el webhook se detecta como duplicado.
+ * Solo aplica a solicitudes al celular (pn); los QR se confirman por webhook.
+ */
+export async function verificarConPey(coperachaId: string) {
+  if (!peyConfigurado()) return { revisadas: 0, pagadas: 0 };
+  const db = await soloLeer();
+  const c = db.coperachas.find((x) => x.id === coperachaId);
+  if (!c) return { revisadas: 0, pagadas: 0 };
+
+  const ahora = Date.now();
+  const porRevisar: { tx: string; aportacionId?: string; regresoId?: string }[] = [
+    ...c.aportaciones
+      .filter((a) => a.estado === "pendiente" && a.peyTransactionId && new Date(a.creadaEn).getTime() > ahora - 30 * 60_000)
+      .map((a) => ({ tx: a.peyTransactionId!, aportacionId: a.id })),
+    ...c.regresos.filter((r) => r.estado === "solicitado" && r.peyTransactionId).map((r) => ({ tx: r.peyTransactionId!, regresoId: r.id })),
+    ...(c.tarifa.estado === "solicitada" && c.tarifa.peyTransactionId ? [{ tx: c.tarifa.peyTransactionId }] : []),
+  ].slice(0, 10);
+
+  let pagadas = 0;
+  let completo = false;
+  for (const p of porRevisar) {
+    try {
+      const t = await consultarTransaccion(p.tx);
+      if (t.status !== "PAID") continue;
+      const r = await conBase((db2) =>
+        aplicarPago(db2, { transactionId: p.tx, amount: Number(t.amount), aportacionId: p.aportacionId, regresoId: p.regresoId, simulado: false }),
+      );
+      if (r.tipo === "aplicado") {
+        pagadas++;
+        if (r.completo && p.aportacionId) completo = true;
+      }
+    } catch {
+      // pey no respondió: lo intentamos en la próxima vuelta
+    }
+  }
+  if (completo) await cobrarTarifa(coperachaId).catch(() => undefined);
+  return { revisadas: porRevisar.length, pagadas };
 }

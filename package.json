@@ -11,6 +11,7 @@
     "reset-data": "node scripts/reset-data.mjs"
   },
   "dependencies": {
+    "@upstash/redis": "^1.34.3",
     "lucide-react": "^0.460.0",
     "next": "14.2.33",
     "qrcode": "^1.5.4",

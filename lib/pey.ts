@@ -96,7 +96,10 @@ export function consultarCuenta(id: string) {
 }
 
 export function consultarTransaccion(id: string) {
-  return llamar<{ id?: string; status: "PENDING" | "PAID" | string }>("GET", `/transaction/${encodeURIComponent(id)}`);
+  return llamar<{ id?: string; status: "PENDING" | "PAID" | string; amount?: number; datePaid?: number }>(
+    "GET",
+    `/transaction/${encodeURIComponent(id)}`,
+  );
 }
 
 // ---------- Firma del webhook (Standard Webhooks) ----------

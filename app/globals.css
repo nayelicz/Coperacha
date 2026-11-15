@@ -3,24 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
 }
 
-html { background: #FAF9F6; }
-body { @apply bg-crema text-tinta antialiased; font-size: 17px; }
+html { background: #0B0B0C; }
+body { @apply bg-tinta text-white antialiased; font-size: 17px; -webkit-tap-highlight-color: transparent; }
+
+/* Números alineados en montos */
+.cifras { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 
 @layer components {
-  .tarjeta { @apply bg-white rounded-2xl shadow-[0_2px_18px_-6px_rgba(60,40,20,0.12)] border border-[#F0EBE3]; }
-  .boton { @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 text-lg font-bold transition active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed; }
-  .boton-barrio { @apply boton bg-barrio text-white hover:bg-barrio-oscuro shadow-md shadow-orange-200; }
-  .boton-impulso { @apply boton bg-impulso text-white hover:bg-impulso-oscuro shadow-md shadow-emerald-200; }
-  .boton-suave { @apply boton bg-white text-tinta border-2 border-[#EDE6DC] hover:border-barrio; }
-  .campo { @apply w-full rounded-xl border-2 border-[#EDE6DC] bg-white px-4 py-3.5 text-lg outline-none transition focus:border-barrio placeholder:text-[#B5ADA2]; }
-  .etiqueta { @apply block text-base font-bold mb-1.5; }
+  /* Hoja clara (como el panel de transacciones del diseño) */
+  .hoja { @apply relative rounded-[32px] bg-gradient-to-b from-papel to-papel2 text-carbon shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)]; }
+  .hoja-asa { @apply mx-auto mb-3 block h-1.5 w-10 rounded-full bg-carbon/15; }
+
+  /* Tarjeta oscura */
+  .panel { @apply rounded-[28px] border border-white/[0.06] bg-capa; }
+
+  /* Botones en píldora */
+  .boton { @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[17px] font-semibold transition active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-40; }
+  .boton-claro { @apply boton bg-papel text-carbon hover:bg-white; }
+  .boton-oscuro { @apply boton bg-capa2 text-white hover:bg-[#2a2a2e]; }
+  .boton-carbon { @apply boton bg-carbon text-white hover:bg-black; }
+  .boton-barrio { @apply boton bg-barrio text-carbon hover:brightness-105; }
+  .boton-impulso { @apply boton bg-impulso text-carbon hover:brightness-105; }
+  .boton-suave { @apply boton border border-carbon/10 bg-white/60 text-carbon hover:bg-white; }
+
+  /* Campos (viven dentro de hojas claras) */
+  .campo { @apply w-full rounded-2xl border border-carbon/10 bg-white/70 px-4 py-3.5 text-[17px] text-carbon outline-none transition placeholder:text-ceniza/70 focus:border-carbon/40 focus:bg-white; }
+  .etiqueta { @apply mb-1.5 block text-[15px] font-semibold text-carbon; }
+
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold; }
+  .titulo-seccion { @apply text-[28px] font-bold tracking-tight; }
+  .sin-barra { scrollbar-width: none; }
+  .sin-barra::-webkit-scrollbar { display: none; }
 }
 
 @media print {
   .no-imprimir { display: none !important; }
-  body { background: white; }
+  html, body { background: white !important; color: #1B1714 !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
